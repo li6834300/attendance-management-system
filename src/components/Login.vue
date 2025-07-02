@@ -1,33 +1,14 @@
 <template>
-      <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div class="max-w-md w-full space-y-8">
-        <div>
-          <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Attendance Management System
-          </h2>
-          <p class="mt-2 text-center text-sm text-gray-600">
-            Sign in to your account
-          </p>
-          
-          <!-- Connectivity Status -->
-          <div v-if="showConnectivityTest" class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-            <h4 class="text-sm font-medium text-blue-800 mb-2">API Connectivity Test</h4>
-            <div v-if="connectivityResults.length === 0" class="text-sm text-blue-600">
-              Testing connections...
-            </div>
-            <div v-else class="space-y-1">
-              <div v-for="result in connectivityResults" :key="result.endpoint" class="text-xs">
-                <span :class="result.working ? 'text-green-600' : 'text-red-600'">
-                  {{ result.working ? '✅' : '❌' }} {{ result.endpoint.split('//')[1] }}
-                </span>
-                <span v-if="result.working" class="text-gray-500"> ({{ result.responseTime }}ms)</span>
-              </div>
-            </div>
-            <button @click="runConnectivityTest" class="mt-2 text-xs text-blue-600 hover:text-blue-800">
-              Retry Test
-            </button>
-          </div>
-        </div>
+  <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+      <div>
+        <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          Attendance Management System
+        </h2>
+        <p class="mt-2 text-center text-sm text-gray-600">
+          Sign in to your account
+        </p>
+      </div>
       <form class="mt-8 space-y-6" @submit.prevent="handleLogin">
         <div class="rounded-md shadow-sm -space-y-px">
           <div>
@@ -56,14 +37,9 @@
           </div>
         </div>
 
-                      <div v-if="error" class="text-red-600 text-sm text-center">
-                {{ error }}
-                <button v-if="error.includes('timeout') || error.includes('Network')" 
-                        @click="showConnectivityTest = true; runConnectivityTest()" 
-                        class="ml-2 text-xs underline">
-                  Test Connectivity
-                </button>
-              </div>
+        <div v-if="error" class="text-red-600 text-sm text-center">
+          {{ error }}
+        </div>
 
         <div>
           <button
@@ -75,21 +51,15 @@
             <span v-else>Sign in</span>
           </button>
         </div>
-
-        <div class="text-center text-sm text-gray-600">
-          <p>Default admin login:</p>
-          <p>Username: <strong>admin</strong></p>
-          <p>Password: <strong>admin123</strong></p>
-        </div>
       </form>
     </div>
   </div>
 </template>
 
 <script>
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { authAPI, testEndpoints } from '../api'
+import { authAPI } from '../api'
 
 export default {
   name: 'Login',
@@ -101,19 +71,6 @@ export default {
     })
     const loading = ref(false)
     const error = ref('')
-    const showConnectivityTest = ref(false)
-    const connectivityResults = ref([])
-
-    const runConnectivityTest = async () => {
-      connectivityResults.value = []
-      try {
-        const results = await testEndpoints()
-        connectivityResults.value = results
-        console.log('Connectivity test results:', results)
-      } catch (err) {
-        console.error('Connectivity test failed:', err)
-      }
-    }
 
     const handleLogin = async () => {
       loading.value = true
@@ -134,34 +91,16 @@ export default {
           router.push('/teacher')
         }
       } catch (err) {
-        const errorMessage = err.response?.data?.error || err.message || 'Login failed'
-        error.value = errorMessage
-        
-        // Auto-show connectivity test on network errors
-        if (errorMessage.includes('timeout') || errorMessage.includes('Network') || err.code === 'ERR_NETWORK') {
-          showConnectivityTest.value = true
-          runConnectivityTest()
-        }
+        error.value = err.response?.data?.error || 'Login failed'
       } finally {
         loading.value = false
       }
     }
 
-    // Test connectivity on component mount
-    onMounted(() => {
-      // Auto-run connectivity test after a short delay
-      setTimeout(() => {
-        runConnectivityTest()
-      }, 1000)
-    })
-
     return {
       credentials,
       loading,
       error,
-      showConnectivityTest,
-      connectivityResults,
-      runConnectivityTest,
       handleLogin
     }
   }

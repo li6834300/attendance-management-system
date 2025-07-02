@@ -1,24 +1,14 @@
 import axios from 'axios'
 
-// Multiple API endpoints for fallback
-const API_ENDPOINTS = [
-  'https://attendance-api-backup.lizhien277.workers.dev',
-  'https://attendance-system-api.lizhien277.workers.dev',
-  // We'll add more as backups
-]
-
-// Try endpoints in order until one works
-let currentEndpointIndex = 0
-let API_BASE_URL = import.meta.env.DEV 
+const API_BASE_URL = import.meta.env.DEV 
   ? 'http://localhost:8787' 
-  : API_ENDPOINTS[currentEndpointIndex]
+  : 'https://attendance-api-backup.lizhien277.workers.dev'
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json'
-  },
-  timeout: 10000 // 10 second timeout
+  }
 })
 
 // Add auth token to requests
@@ -30,24 +20,10 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// Handle auth errors and connectivity issues
+// Handle auth errors
 api.interceptors.response.use(
   (response) => response,
-  async (error) => {
-    // If it's a network error and we're in production, try next endpoint
-    if (error.code === 'ERR_NETWORK' || error.code === 'ECONNABORTED') {
-      if (!import.meta.env.DEV && currentEndpointIndex < API_ENDPOINTS.length - 1) {
-        console.warn(`API endpoint ${API_ENDPOINTS[currentEndpointIndex]} failed, trying next...`)
-        currentEndpointIndex++
-        api.defaults.baseURL = API_ENDPOINTS[currentEndpointIndex]
-        
-        // Retry the original request with new endpoint
-        const originalConfig = error.config
-        originalConfig.baseURL = API_ENDPOINTS[currentEndpointIndex]
-        return api.request(originalConfig)
-      }
-    }
-    
+  (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('auth_token')
       localStorage.removeItem('user_role')
@@ -56,41 +32,6 @@ api.interceptors.response.use(
     return Promise.reject(error)
   }
 )
-
-// Helper function to test all endpoints
-export const testEndpoints = async () => {
-  const results = []
-  
-  for (const endpoint of API_ENDPOINTS) {
-    try {
-      const testApi = axios.create({ 
-        baseURL: endpoint, 
-        timeout: 5000,
-        headers: { 'Content-Type': 'application/json' }
-      })
-      
-      const start = Date.now()
-      await testApi.post('/api/auth/login', { username: 'test', password: 'test' })
-      const time = Date.now() - start
-      
-      results.push({
-        endpoint,
-        status: 'reachable',
-        responseTime: time,
-        working: true
-      })
-    } catch (error) {
-      results.push({
-        endpoint,
-        status: error.code || 'error',
-        working: false,
-        error: error.message
-      })
-    }
-  }
-  
-  return results
-}
 
 export const authAPI = {
   login: (credentials) => api.post('/api/auth/login', credentials),
