@@ -2,7 +2,7 @@ import axios from 'axios'
 
 const API_BASE_URL = import.meta.env.DEV 
   ? 'http://localhost:8787' 
-  : 'https://attendance-system-api.your-subdomain.workers.dev'
+  : 'https://attendance-system-api.lizhien277.workers.dev'
 
 const api = axios.create({
   baseURL: API_BASE_URL,
