@@ -1,0 +1,23 @@
+name = "attendance-system-api"
+main = "backend/index.js"
+compatibility_date = "2023-10-25"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "attendance-db"
+database_id = "40233a3c-0608-4253-9804-578ebdbfa72d"
+
+[env.production.vars]
+ENVIRONMENT = "production"
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "attendance-db"
+database_id = "40233a3c-0608-4253-9804-578ebdbfa72d"
+
+[[env.development.d1_databases]]
+binding = "DB"
+database_name = "attendance-db"
+database_id = "40233a3c-0608-4253-9804-578ebdbfa72d"
+
+ 
