@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Connectivity Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+        .result { margin: 20px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>Attendance System API Test</h1>
+    <p>This page tests connectivity to your Cloudflare Worker API.</p>
+    
+    <h3>Test Endpoints:</h3>
+    <button onclick="testAPI('https://attendance-api-backup.lizhien277.workers.dev')">Test Backup API</button>
+    <button onclick="testAPI('https://attendance-system-api.lizhien277.workers.dev')">Test Main API</button>
+    
+    <div id="results"></div>
+
+    <script>
+        async function testAPI(baseUrl) {
+            const results = document.getElementById('results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'result';
+            
+            try {
+                resultDiv.innerHTML = `<strong>Testing ${baseUrl}...</strong>`;
+                results.appendChild(resultDiv);
+                
+                // Test login endpoint
+                const response = await fetch(`${baseUrl}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: 'admin',
+                        password: 'admin123'
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <strong>✅ SUCCESS: ${baseUrl}</strong><br>
+                        Status: ${response.status}<br>
+                        Token received: ${data.token ? 'Yes' : 'No'}<br>
+                        User: ${data.user ? data.user.username : 'N/A'}
+                    `;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `
+                        <strong>❌ ERROR: ${baseUrl}</strong><br>
+                        Status: ${response.status}<br>
+                        Message: ${await response.text()}
+                    `;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <strong>❌ CONNECTION ERROR: ${baseUrl}</strong><br>
+                    Error: ${error.message}<br>
+                    This usually indicates a network connectivity issue.
+                `;
+            }
+        }
+        
+        // Auto-test on page load
+        window.onload = function() {
+            setTimeout(() => {
+                testAPI('https://attendance-api-backup.lizhien277.workers.dev');
+            }, 1000);
+        };
+    </script>
+</body>
+</html> 
